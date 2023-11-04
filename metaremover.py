@@ -61,3 +61,32 @@ class MainWindow(QMainWindow):
                             self.metadata_display.append(f"{tagname}: {value}")
         except Exception as e:
             QMessageBox.warning(self, 'Error', str(e))
+
+    
+    def clear_metadata(self):
+        try:
+            if self.file_path.lower().endswith('.txt'):
+                os.utime(self.file_path, None)
+                self.metadata_display.clear()
+                QMessageBox.information(self, 'Success', 'Metadata cleared successfully!')
+            elif self.file_path.lower().endswith(('.jpg', '.jpeg', '.png')):
+                img = Image.open(self.file_path)
+                data = img.getdata()
+                img_without_exif = Image.new(img.mode, img.size)
+                img_without_exif.putdata(data)
+                
+                options = QFileDialog.Options()
+                save_path, _ = QFileDialog.getSaveFileName(self, 'Save File', '', 'JPEG Images (*.jpg);;All Files (*)', options=options)
+                if save_path:
+                    img_without_exif.save(save_path, 'JPEG')
+                    img_without_exif.close()
+                    img.close()
+                    self.metadata_display.clear()
+                    QMessageBox.information(self, 'Success', f'Metadata cleared successfully! Saved as {save_path}')
+        except Exception as e:
+            QMessageBox.warning(self, 'Error', str(e))
+
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    main_win = MainWindow()
+    sys.exit(app.exec_())
