@@ -33,3 +33,31 @@ class MainWindow(QMainWindow):
         
         self.file_path = None
         self.show()
+
+        
+    def open_file_dialog(self):
+        self.metadata_display.clear()
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getOpenFileName(self, 'Open File', '', 'All Files (*)', options=options)
+        if file_path:
+            self.file_path = file_path
+            self.display_metadata()
+
+    def display_metadata(self):
+        try:
+            if self.file_path.lower().endswith('.txt'):
+                file_info = os.stat(self.file_path)
+                text = f"Size: {file_info.st_size} bytes\n"
+                text += f"Creation Time: {datetime.datetime.fromtimestamp(file_info.st_ctime)}\n"
+                text += f"Last Access Time: {datetime.datetime.fromtimestamp(file_info.st_atime)}\n"
+                text += f"Last Modification Time: {datetime.datetime.fromtimestamp(file_info.st_mtime)}\n"
+                self.metadata_display.setPlainText(text)
+            elif self.file_path.lower().endswith(('.jpg', '.jpeg', '.png')):
+                with Image.open(self.file_path) as img:
+                    info = img._getexif()
+                    if info is not None:
+                        for tag, value in info.items():
+                            tagname = ExifTags.TAGS.get(tag, tag)
+                            self.metadata_display.append(f"{tagname}: {value}")
+        except Exception as e:
+            QMessageBox.warning(self, 'Error', str(e))
